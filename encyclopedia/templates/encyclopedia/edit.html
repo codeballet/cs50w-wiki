@@ -1,0 +1,22 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    {{ title.capitalize }}
+{% endblock %}
+
+{% block body %}
+    <h1 class="ml-1">Edit page: {{ title.capitalize }}</h1>
+
+    <form class="ml-2" action="{% url 'edit' title %}" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <div>
+                <textarea id="edit_content" type="textarea" name="edit_content">{{ content }}</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <input type="submit">
+        </div>
+    </form>
+
+{% endblock %}

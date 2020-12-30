@@ -9,12 +9,15 @@ from django.urls import reverse
 from . import util
 
 
-class SearchForm(forms.Form):
-    q = forms.CharField(max_length=250)
+class EditEntryForm(forms.Form):
+    edit_content = forms.CharField(widget=forms.Textarea, label="Content", min_length=1, max_length=25000, strip=True)
 
 class CreateEntryForm(forms.Form):
     title = forms.CharField(label="Title", min_length=1, max_length=250, strip=True)
     content = forms.CharField(widget=forms.Textarea, label="Content", min_length=1, max_length=25000, strip=True)
+
+class SearchForm(forms.Form):
+    q = forms.CharField(max_length=250)
 
 
 def index(request):
@@ -42,15 +45,34 @@ def index(request):
     })
 
 
-def entry(request, title):
-    md_text = util.get_entry(title)
+def edit(request, title):
+    if request.method == "POST":
+        form = EditEntryForm(request.POST)
 
-    if md_text == None:
+        if form.is_valid():
+            content = form.cleaned_data["edit_content"]
+            util.save_entry(title, content)
+
+            return HttpResponseRedirect(reverse("entry", args=[title]))
+
+    md_content = util.get_entry(title)
+
+    return render(request, "encyclopedia/edit.html", {
+        "form": EditEntryForm(),
+        "title": title,
+        "content": md_content
+    })
+
+
+def entry(request, title):
+    md_content = util.get_entry(title)
+
+    if md_content == None:
         return render(request, "encyclopedia/error.html")
 
     return render(request, "encyclopedia/entry.html", {
-        "title": title.upper(),
-        "text": markdown2.markdown(md_text)
+        "title": title,
+        "content": markdown2.markdown(md_content)
     })
 
 def new(request):
