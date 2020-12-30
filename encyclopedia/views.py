@@ -12,6 +12,10 @@ from . import util
 class SearchForm(forms.Form):
     q = forms.CharField(max_length=250)
 
+class CreateEntryForm(forms.Form):
+    title = forms.CharField(label="Title", min_length=1, max_length=250, strip=True)
+    content = forms.CharField(widget=forms.Textarea, label="Content", min_length=1, max_length=25000, strip=True)
+
 
 def index(request):
     if request.method == "POST":
@@ -47,4 +51,26 @@ def entry(request, title):
     return render(request, "encyclopedia/entry.html", {
         "title": title.upper(),
         "text": markdown2.markdown(md_text)
+    })
+
+def new(request):
+    if request.method == "POST":
+        form = CreateEntryForm(request.POST)
+        
+        if form.is_valid():
+            entries_list = util.list_entries()
+            title = form.cleaned_data["title"].lower()
+            content = form.cleaned_data["content"]
+
+            if title in entries_list:
+                return render(request, "encyclopedia/new.html", {
+                    "form": form,
+                    "error": "Error: That Page already exists! Please choose another Title."
+                })
+
+            util.save_entry(title, content)
+            return HttpResponseRedirect(reverse("entry", args=[title]))
+
+    return render(request, "encyclopedia/new.html", {
+        "form": CreateEntryForm()
     })
