@@ -1,10 +1,38 @@
-from django.shortcuts import render
 import markdown2
+import re
+
+from django import forms
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
 
 from . import util
 
 
+class SearchForm(forms.Form):
+    q = forms.CharField(max_length=250)
+
+
 def index(request):
+    if request.method == "POST":
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            q = form.cleaned_data["q"].lower()
+            print(f"Search term: {q}")
+
+            if util.get_entry(q):
+                return HttpResponseRedirect(reverse("entry", args=[q]))
+
+            entries_list = util.list_entries()
+            matches = []
+            for entry in entries_list:
+                if re.search(".*" + q + ".*", entry.lower()):
+                    matches.append(entry)
+
+            return render(request, "encyclopedia/results.html", {
+                "matches": matches
+            })
+
     return render(request, "encyclopedia/index.html", {
         "entries": util.list_entries()
     })
