@@ -1,4 +1,5 @@
 import markdown2
+import random
 import re
 
 from django import forms
@@ -96,3 +97,12 @@ def new(request):
     return render(request, "encyclopedia/new.html", {
         "form": CreateEntryForm()
     })
+
+def random_entry(request):
+    entries_list = util.list_entries()
+    n_entries = len(entries_list)
+    n_entry = random.randint(0, n_entries - 1)
+    title = entries_list[n_entry]
+    md_content = util.get_entry(title)
+
+    return HttpResponseRedirect(reverse("entry", args=[title]))
